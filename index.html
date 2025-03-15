@@ -5,10 +5,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinkedIn to Resume Generator</title>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script type="module">
+        import { app } from './app.js';
+        window.app = app;
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script type="module" src="app.js"></script>
+    <style>
+        #resume-preview {
+            width: 21cm;
+            background-color: white;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
@@ -247,7 +256,11 @@
                         </div>
                         <div class="p-3">
                             <h3 class="font-bold text-lg" x-text="template.name"></h3>
-                            <p class="text-gray-600 text-sm">Profesjonalny szablon</p>
+                            <p class="text-gray-600 text-sm" x-text="template.description"></p>
+                            <button @click.stop="previewTemplate(template.id)"
+                                class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                Podgląd
+                            </button>
                         </div>
                     </div>
                 </template>
@@ -291,283 +304,73 @@
 
                 <!-- A4 format wrapper with proper scaling -->
                 <div class="bg-gray-100 p-8 flex justify-center">
-                    <div class="bg-white shadow-lg relative" style="width: 210mm; height: 297mm; overflow: hidden;">
-                        <!-- Page indicator -->
-                        <div class="absolute bottom-2 right-2 bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">
-                            Strona <span x-text="currentPage"></span>
-                        </div>
+                    <div class="shadow-lg w-full bg-white" id="resume-preview">
+                        <!-- Resume content -->
+                        <div class="font-sans leading-relaxed text-gray-800 p-8 box-border">
+                            <!-- Header with name and title -->
+                            <div class="resume-header text-center border-b pb-4">
+                                <h1 class="resume-name text-3xl font-bold" x-text="profileData.name"></h1>
+                                <p class="resume-title text-xl text-gray-600 mt-1" x-text="profileData.title"></p>
+                                <div class="resume-contact flex justify-center space-x-4 mt-2 text-sm text-gray-600">
+                                    <span x-show="profileData.email" x-text="profileData.email"></span>
+                                    <span x-show="profileData.phone" x-text="profileData.phone"></span>
+                                </div>
+                            </div>
 
-                        <!-- Resume content with pagination -->
-                        <div id="resume-preview" class="font-sans leading-relaxed text-gray-800 p-[20mm] box-border"
-                            :style="`font-size: 12pt; line-height: 1.5; transform: translateY(-${(currentPage-1) * 297}mm);`">
+                            <!-- Summary -->
+                            <div x-show="profileData.summary" class="resume-section mt-6">
+                                <h2 class="resume-section-title text-xl font-bold mb-2">Podsumowanie</h2>
+                                <p class="text-gray-700" x-text="profileData.summary"></p>
+                            </div>
 
-                            <!-- Classic Template -->
-                            <template x-if="selectedTemplate === 1">
-                                <div class="space-y-4">
-                                    <!-- Header -->
+                            <!-- Experience -->
+                            <div x-show="profileData.experience && profileData.experience.length"
+                                class="resume-section mt-6">
+                                <h2 class="resume-section-title text-xl font-bold mb-3">Doświadczenie</h2>
+                                <template x-for="(job, index) in profileData.experience" :key="index">
                                     <div class="mb-4">
-                                        <h1 class="text-2xl font-bold" x-text="profileData.name"></h1>
-                                        <p class="text-lg text-gray-700" x-text="profileData.title"></p>
-                                        <div class="flex flex-wrap gap-x-4 mt-1 text-sm text-gray-600">
-                                            <span x-text="profileData.location"></span>
-                                            <span x-text="profileData.email"></span>
-                                            <span x-text="profileData.phone"></span>
-                                        </div>
+                                        <h3 class="resume-job-title font-bold" x-text="job.title"></h3>
+                                        <p class="text-gray-600">
+                                            <span class="resume-job-company" x-text="job.company"></span> •
+                                            <span class="resume-job-date">
+                                                <span x-text="job.startDate"></span> -
+                                                <span x-text="job.endDate || 'Obecnie'"></span>
+                                            </span>
+                                        </p>
+                                        <p class="mt-2" x-text="job.description"></p>
                                     </div>
+                                </template>
+                            </div>
 
-                                    <!-- Summary -->
+                            <!-- Education -->
+                            <div x-show="profileData.education && profileData.education.length"
+                                class="resume-section mt-6">
+                                <h2 class="resume-section-title text-xl font-bold mb-3">Edukacja</h2>
+                                <template x-for="(edu, index) in profileData.education" :key="index">
                                     <div class="mb-4">
-                                        <h2 class="text-lg font-bold border-b border-gray-300 pb-1 mb-2">Podsumowanie
-                                        </h2>
-                                        <p class="text-sm" x-text="profileData.summary"></p>
+                                        <h3 class="resume-job-title font-bold" x-text="edu.institution"></h3>
+                                        <p class="text-gray-600">
+                                            <span class="resume-job-company" x-text="edu.degree"></span> •
+                                            <span class="resume-job-date">
+                                                <span x-text="edu.startDate"></span> -
+                                                <span x-text="edu.endDate || 'Obecnie'"></span>
+                                            </span>
+                                        </p>
+                                        <p class="mt-2" x-text="edu.description"></p>
                                     </div>
+                                </template>
+                            </div>
 
-                                    <!-- Experience -->
-                                    <div class="mb-6">
-                                        <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-1 mb-3">Doświadczenie
-                                        </h2>
-                                        <template x-for="(job, index) in profileData.experience" :key="index">
-                                            <div class="mb-4">
-                                                <div class="flex justify-between">
-                                                    <h3 class="font-bold" x-text="job.title"></h3>
-                                                    <div class="text-gray-600">
-                                                        <span x-text="job.startDate"></span> - <span
-                                                            x-text="job.endDate || 'Obecnie'"></span>
-                                                    </div>
-                                                </div>
-                                                <p class="font-semibold" x-text="job.company"></p>
-                                                <p class="mt-1" x-text="job.description"></p>
-                                            </div>
-                                        </template>
-                                    </div>
-
-                                    <!-- Education -->
-                                    <div class="mb-6">
-                                        <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-1 mb-3">Edukacja</h2>
-                                        <template x-for="(edu, index) in profileData.education" :key="index">
-                                            <div class="mb-4">
-                                                <div class="flex justify-between">
-                                                    <h3 class="font-bold" x-text="edu.institution"></h3>
-                                                    <div class="text-gray-600">
-                                                        <span x-text="edu.startDate"></span> - <span
-                                                            x-text="edu.endDate || 'Obecnie'"></span>
-                                                    </div>
-                                                </div>
-                                                <p class="font-semibold" x-text="edu.degree"></p>
-                                                <p class="mt-1" x-text="edu.description"></p>
-                                            </div>
-                                        </template>
-                                    </div>
-
-                                    <!-- Skills -->
-                                    <div>
-                                        <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-1 mb-3">Umiejętności
-                                        </h2>
-                                        <div class="flex flex-wrap gap-2">
-                                            <template x-for="(skill, index) in profileData.skills" :key="index">
-                                                <span class="bg-gray-100 px-3 py-1 rounded-full" x-text="skill"></span>
-                                            </template>
-                                        </div>
-                                    </div>
+                            <!-- Skills -->
+                            <div x-show="profileData.skills && profileData.skills.length" class="resume-section mt-6">
+                                <h2 class="resume-section-title text-xl font-bold mb-3">Umiejętności</h2>
+                                <div class="resume-skill-container flex flex-wrap gap-2">
+                                    <template x-for="(skill, index) in profileData.skills" :key="index">
+                                        <span class="resume-skill bg-gray-100 px-3 py-1 rounded-full text-sm"
+                                            x-text="skill"></span>
+                                    </template>
                                 </div>
-                            </template>
-
-                            <!-- Modern Template -->
-                            <template x-if="selectedTemplate === 2">
-                                <div class="flex flex-col md:flex-row gap-6">
-                                    <!-- Sidebar -->
-                                    <div class="md:w-1/3 bg-blue-50 p-4">
-                                        <div class="mb-6 text-center">
-                                            <div
-                                                class="w-24 h-24 bg-blue-500 rounded-full mx-auto mb-3 flex items-center justify-center text-white text-3xl font-bold">
-                                                <span x-text="profileData.name.charAt(0)"></span>
-                                            </div>
-                                            <h1 class="text-xl font-bold" x-text="profileData.name"></h1>
-                                            <p class="text-blue-600" x-text="profileData.title"></p>
-                                        </div>
-
-                                        <div class="mb-6">
-                                            <h2 class="text-lg font-bold border-b border-blue-200 pb-1 mb-2">Kontakt
-                                            </h2>
-                                            <div class="space-y-2 text-sm">
-                                                <p x-text="profileData.location"></p>
-                                                <p x-text="profileData.email"></p>
-                                                <p x-text="profileData.phone"></p>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <h2 class="text-lg font-bold border-b border-blue-200 pb-1 mb-2">
-                                                Umiejętności</h2>
-                                            <div class="flex flex-wrap gap-2">
-                                                <template x-for="(skill, index) in profileData.skills" :key="index">
-                                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
-                                                        x-text="skill"></span>
-                                                </template>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Main Content -->
-                                    <div class="md:w-2/3">
-                                        <!-- Summary -->
-                                        <div class="mb-6">
-                                            <h2
-                                                class="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1 mb-3">
-                                                Podsumowanie</h2>
-                                            <p x-text="profileData.summary"></p>
-                                        </div>
-
-                                        <!-- Experience -->
-                                        <div class="mb-6">
-                                            <h2
-                                                class="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1 mb-3">
-                                                Doświadczenie</h2>
-                                            <template x-for="(job, index) in profileData.experience" :key="index">
-                                                <div class="mb-4">
-                                                    <div class="flex justify-between items-baseline">
-                                                        <h3 class="font-bold text-lg" x-text="job.title"></h3>
-                                                        <p class="text-gray-600 text-sm">
-                                                            <span x-text="job.startDate"></span> - <span
-                                                                x-text="job.endDate || 'Obecnie'"></span>
-                                                        </p>
-                                                    </div>
-                                                    <p class="text-blue-600 font-medium" x-text="job.description"></p>
-                                                </div>
-                                            </template>
-                                        </div>
-
-                                        <!-- Education -->
-                                        <div>
-                                            <h2
-                                                class="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1 mb-3">
-                                                Edukacja</h2>
-                                            <template x-for="(edu, index) in profileData.education" :key="index">
-                                                <div class="mb-4">
-                                                    <div class="flex justify-between items-baseline">
-                                                        <h3 class="font-bold text-lg" x-text="edu.degree"></h3>
-                                                        <p class="text-gray-600 text-sm">
-                                                            <span x-text="edu.startDate"></span> - <span
-                                                                x-text="edu.endDate || 'Obecnie'"></span>
-                                                        </p>
-                                                    </div>
-                                                    <p class="text-blue-600 font-medium" x-text="edu.institution"></p>
-                                                    <p class="mt-1" x-text="edu.description"></p>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-
-                            <!-- Professional Template -->
-                            <template x-if="selectedTemplate === 3">
-                                <div>
-                                    <!-- Header with indigo accent -->
-                                    <div class="border-b-4 border-indigo-700 pb-4 mb-6">
-                                        <div class="flex items-center justify-between">
-                                            <div>
-                                                <h1 class="text-3xl font-bold mb-1" x-text="profileData.name"></h1>
-                                                <p class="text-xl text-indigo-700" x-text="profileData.title"></p>
-                                            </div>
-                                            <div class="text-right text-gray-600">
-                                                <p x-text="profileData.email"></p>
-                                                <p x-text="profileData.phone"></p>
-                                                <p x-text="profileData.location"></p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Summary -->
-                                    <div class="mb-6">
-                                        <h2 class="text-lg font-bold text-indigo-700 mb-2">PODSUMOWANIE ZAWODOWE</h2>
-                                        <p x-text="profileData.summary"></p>
-                                    </div>
-
-                                    <!-- Experience -->
-                                    <div class="mb-6">
-                                        <h2 class="text-lg font-bold text-indigo-700 mb-2">DOŚWIADCZENIE ZAWODOWE</h2>
-                                        <template x-for="(job, index) in profileData.experience" :key="index">
-                                            <div class="mb-4">
-                                                <div class="flex justify-between items-baseline">
-                                                    <h3 class="font-bold text-lg" x-text="job.company"></h3>
-                                                    <p class="text-gray-600">
-                                                        <span x-text="job.startDate"></span> - <span
-                                                            x-text="job.endDate || 'Obecnie'"></span>
-                                                    </p>
-                                                </div>
-                                                <p class="font-semibold text-indigo-600 mb-1" x-text="job.title"></p>
-                                                <p x-text="job.description"></p>
-                                            </div>
-                                        </template>
-                                    </div>
-
-                                    <!-- Education -->
-                                    <div class="mb-6">
-                                        <h2 class="text-lg font-bold text-indigo-700 mb-2">WYKSZTAŁCENIE</h2>
-                                        <template x-for="(edu, index) in profileData.education" :key="index">
-                                            <div class="mb-4">
-                                                <div class="flex justify-between items-baseline">
-                                                    <h3 class="font-bold text-lg" x-text="edu.institution"></h3>
-                                                    <p class="text-gray-600">
-                                                        <span x-text="edu.startDate"></span> - <span
-                                                            x-text="edu.endDate || 'Obecnie'"></span>
-                                                    </p>
-                                                </div>
-                                                <p class="font-semibold text-indigo-600 mb-1" x-text="edu.degree"></p>
-                                                <p x-text="edu.description"></p>
-                                            </div>
-                                        </template>
-                                    </div>
-
-                                    <!-- Skills -->
-                                    <div>
-                                        <h2 class="text-lg font-bold text-indigo-700 mb-2">UMIEJĘTNOŚCI I KOMPETENCJE
-                                        </h2>
-                                        <div class="flex flex-wrap gap-2">
-                                            <template x-for="(skill, index) in profileData.skills" :key="index">
-                                                <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded"
-                                                    x-text="skill"></span>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-
-                            <!-- Minimal Template -->
-                            <template x-if="selectedTemplate === 4">
-                                <!-- Minimal template content -->
-                            </template>
-
-                            <!-- Executive Template -->
-                            <template x-if="selectedTemplate === 5">
-                                <!-- Executive template content -->
-                            </template>
-
-                            <!-- Creative Template -->
-                            <template x-if="selectedTemplate === 6">
-                                <!-- Creative template content -->
-                            </template>
-
-                            <!-- Technical Template -->
-                            <template x-if="selectedTemplate === 7">
-                                <!-- Technical template content -->
-                            </template>
-
-                            <!-- Corporate Template -->
-                            <template x-if="selectedTemplate === 8">
-                                <!-- Corporate template content -->
-                            </template>
-
-                            <!-- Academic Template -->
-                            <template x-if="selectedTemplate === 9">
-                                <!-- Academic template content -->
-                            </template>
-
-                            <!-- Bold Template -->
-                            <template x-if="selectedTemplate === 10">
-                                <!-- Bold template content -->
-                            </template>
+                            </div>
                         </div>
                     </div>
                 </div>

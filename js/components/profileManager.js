@@ -54,6 +54,11 @@ export const profileManager = {
      * @returns {Array} - The updated skills array
      */
     addSkill(skillsArray, newSkill) {
+        // Check if already at max skills limit (10)
+        if (skillsArray.length >= 10) {
+            return skillsArray;
+        }
+
         if (newSkill.trim() !== '') {
             skillsArray.push(newSkill.trim());
         }

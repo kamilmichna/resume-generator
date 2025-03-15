@@ -89,7 +89,7 @@ export function fetchLinkedInData(linkedinUrl) {
                         "location": "New York, New York, United States",
                         "phone": "",
                         "profile_image_url": "https://media.licdn.com/dms/image/D4E03AQGbJVJnATuprA/profile-displayphoto-shrink_800_800/0/1702576825399?e=1721865600&v=beta&t=r74_ZJruN-pR_lRw7hWdR3c9F-ZKrhcAbkMcVOxtUTI",
-                        "skills": "On-camera Interviewing|Teaching|Executive Management|Integrated Marketing|Crowdfunding|Financial Analysis|Equity Capital Markets|Distressed Debt|Film Production|Independent Film|New Media|Portfolio Management|Startups|Employee Engagement|Digital Media|Private Equity|Venture Capital|Start-ups|Film|Television|Media Production|Mobile Marketing|Content Marketing|Mobile Advertising|Content Strategy|Advertising|Content Development|Entrepreneurship|Strategy|Mobile Devices|Marketing|Real Estate Transactions|Commercial Real Estate|Investment Strategies|Investment Management|investment|Business Development|Public Speaking|Strategic Partnerships|Management|Angel Investing"
+                        "skills": "Financial Analysis|Investment Management|Real Estate|Private Equity|Venture Capital|Portfolio Management|Public Speaking|Strategic Partnerships|Business Development|Leadership"
                     },
                     "message": "ok"
                 };
@@ -110,8 +110,8 @@ export function fetchLinkedInData(linkedinUrl) {
  * @returns {Object} - Processed profile data
  */
 function processLinkedInData(data) {
-    // Format skills from pipe-separated string to array
-    const skillsArray = data.skills ? data.skills.split('|') : [];
+    // Format skills from pipe-separated string to array and limit to 10
+    const skillsArray = data.skills ? data.skills.split('|').slice(0, 10) : [];
 
     // Map the API response to our profileData structure
     return {
