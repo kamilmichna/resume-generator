@@ -13,7 +13,7 @@ import { generatePDF } from './js/utils/pdfGenerator.js';
  */
 export function app() {
     return {
-        step: 1,
+        step: 2,
         isLoading: false,
         linkedinUrl: '',
         profileData: defaultProfileData,
