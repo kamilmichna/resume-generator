@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn to Resume Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script type="module" src="app.js"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8" x-data="app()">
+        <!-- Step 1: LinkedIn URL Input -->
+        <div x-show="step === 1" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-2xl font-bold mb-4 text-center">Generator CV z LinkedIn</h1>
+            <form @submit.prevent="fetchLinkedInData">
+                <div class="mb-4">
+                    <label for="linkedinUrl" class="block text-gray-700 mb-2">Wprowadź URL profilu LinkedIn</label>
+                    <input type="url" id="linkedinUrl" x-model="linkedinUrl"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://www.linkedin.com/in/username" required>
+                </div>
+                <button type="submit"
+                    class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex justify-center items-center">
+                    <span x-show="!isLoading">Pobierz Profil</span>
+                    <span x-show="isLoading" class="flex items-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        Ładowanie...
+                    </span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Step 2: Edit LinkedIn Data -->
+        <div x-show="step === 2" class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-2xl font-bold mb-4">Edytuj Informacje Profilowe</h1>
+
+            <!-- Personal Information -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-3 border-b pb-2">Informacje Osobiste</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 mb-1">Imię i Nazwisko</label>
+                        <input type="text" x-model="profileData.name"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">Stanowisko</label>
+                        <input type="text" x-model="profileData.title"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">Email</label>
+                        <input type="email" x-model="profileData.email"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">Telefon</label>
+                        <input type="tel" x-model="profileData.phone"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-700 mb-1">Lokalizacja</label>
+                        <input type="text" x-model="profileData.location"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-700 mb-1">Podsumowanie</label>
+                        <textarea x-model="profileData.summary" rows="4"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experience -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-3 border-b pb-2">Doświadczenie</h2>
+                <template x-for="(job, index) in profileData.experience" :key="index">
+                    <div class="mb-4 p-4 border border-gray-200 rounded-md">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-medium">Doświadczenie #<span x-text="index + 1"></span></h3>
+                            <button @click="removeExperience(index)" class="text-red-500 hover:text-red-700">
+                                <span class="sr-only">Usuń</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                            <div>
+                                <label class="block text-gray-700 mb-1">Firma</label>
+                                <input type="text" x-model="job.company"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">Stanowisko</label>
+                                <input type="text" x-model="job.title"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">Data Rozpoczęcia</label>
+                                <input type="text" x-model="job.startDate"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">Data Zakończenia</label>
+                                <input type="text" x-model="job.endDate"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Obecne">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-1">Opis</label>
+                            <textarea x-model="job.description" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                        </div>
+                    </div>
+                </template>
+                <button @click="addExperience"
+                    class="mt-2 bg-blue-100 text-blue-700 py-2 px-4 rounded-md hover:bg-blue-200">
+                    + Dodaj Doświadczenie
+                </button>
+            </div>
+
+            <!-- Education -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-3 border-b pb-2">Edukacja</h2>
+                <template x-for="(edu, index) in profileData.education" :key="index">
+                    <div class="mb-4 p-4 border border-gray-200 rounded-md">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-medium">Edukacja #<span x-text="index + 1"></span></h3>
+                            <button @click="removeEducation(index)" class="text-red-500 hover:text-red-700">
+                                <span class="sr-only">Usuń</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                            <div>
+                                <label class="block text-gray-700 mb-1">Instytucja</label>
+                                <input type="text" x-model="edu.institution"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">Stopień/Tytuł</label>
+                                <input type="text" x-model="edu.degree"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">Data Rozpoczęcia</label>
+                                <input type="text" x-model="edu.startDate"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">Data Zakończenia</label>
+                                <input type="text" x-model="edu.endDate"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Obecne">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-1">Opis</label>
+                            <textarea x-model="edu.description" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                        </div>
+                    </div>
+                </template>
+                <button @click="addEducation"
+                    class="mt-2 bg-blue-100 text-blue-700 py-2 px-4 rounded-md hover:bg-blue-200">
+                    + Dodaj Edukację
+                </button>
+            </div>
+
+            <!-- Skills -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-3 border-b pb-2">Umiejętności</h2>
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <template x-for="(skill, index) in profileData.skills" :key="index">
+                        <div class="bg-gray-100 px-3 py-1 rounded-full flex items-center">
+                            <span x-text="skill"></span>
+                            <button @click="removeSkill(index)" class="ml-2 text-gray-500 hover:text-red-500">
+                                <span class="sr-only">Usuń</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <div class="flex">
+                    <input type="text" x-model="newSkill" @keydown.enter.prevent="addSkill"
+                        class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Dodaj umiejętność">
+                    <button @click="addSkill" class="bg-blue-500 text-white py-2 px-4 rounded-r-md hover:bg-blue-600">
+                        Dodaj
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-between mt-6">
+                <button @click="step = 1" class="bg-gray-300 text-gray-800 py-2 px-6 rounded-md hover:bg-gray-400">
+                    Wstecz
+                </button>
+                <button @click="step = 2.5" class="bg-blue-500 text-white py-2 px-6 rounded-md hover:bg-blue-600">
+                    Wybierz Szablon
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2.5: Choose Resume Template -->
+        <div x-show="step === 2.5" class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-2xl font-bold mb-4">Wybierz Szablon CV</h1>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <!-- Template options -->
+                <template x-for="template in templates" :key="template.id">
+                    <div class="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                        :class="{'ring-2 ring-blue-500': selectedTemplate === template.id}"
+                        @click="selectedTemplate = template.id">
+                        <div class="h-40 bg-gray-100 flex items-center justify-center">
+                            <!-- Template preview -->
+                            <div class="w-3/4 p-4 bg-white shadow">
+                                <div class="h-4" :class="`bg-${template.color}`"></div>
+                                <div class="h-3 bg-gray-300 mb-2 mt-2 w-1/2"></div>
+                                <div class="h-2 bg-gray-200 mb-1"></div>
+                                <div class="h-2 bg-gray-200 mb-1"></div>
+                                <div class="h-2" :class="`bg-${template.accent}`"></div>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-bold text-lg" x-text="template.name"></h3>
+                            <p class="text-gray-600 text-sm">Profesjonalny szablon</p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="flex justify-between mt-6">
+                <button @click="step = 2" class="bg-gray-300 text-gray-800 py-2 px-6 rounded-md hover:bg-gray-400">
+                    Wstecz
+                </button>
+                <button @click="generateResume" :disabled="!selectedTemplate"
+                    :class="{'opacity-50 cursor-not-allowed': !selectedTemplate}"
+                    class="bg-blue-500 text-white py-2 px-6 rounded-md hover:bg-blue-600">
+                    Generuj CV
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Resume Preview -->
+        <div x-show="step === 3" class="max-w-5xl mx-auto">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h1 class="text-2xl font-bold mb-4">Twoje CV</h1>
+
+                <!-- Page navigation controls -->
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-gray-700">
+                        Strona <span x-text="currentPage"></span> z <span x-text="totalPages"></span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button @click="prevPage" :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
+                            :disabled="currentPage === 1"
+                            class="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300">
+                            Poprzednia
+                        </button>
+                        <button @click="nextPage" :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
+                            :disabled="currentPage === totalPages"
+                            class="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300">
+                            Następna
+                        </button>
+                    </div>
+                </div>
+
+                <!-- A4 format wrapper with proper scaling -->
+                <div class="bg-gray-100 p-8 flex justify-center">
+                    <div class="bg-white shadow-lg relative" style="width: 210mm; height: 297mm; overflow: hidden;">
+                        <!-- Page indicator -->
+                        <div class="absolute bottom-2 right-2 bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">
+                            Strona <span x-text="currentPage"></span>
+                        </div>
+
+                        <!-- Resume content with pagination -->
+                        <div id="resume-preview" class="font-sans leading-relaxed text-gray-800 p-[20mm] box-border"
+                            :style="`font-size: 12pt; line-height: 1.5; transform: translateY(-${(currentPage-1) * 297}mm);`">
+
+                            <!-- Classic Template -->
+                            <template x-if="selectedTemplate === 1">
+                                <div class="space-y-4">
+                                    <!-- Header -->
+                                    <div class="mb-4">
+                                        <h1 class="text-2xl font-bold" x-text="profileData.name"></h1>
+                                        <p class="text-lg text-gray-700" x-text="profileData.title"></p>
+                                        <div class="flex flex-wrap gap-x-4 mt-1 text-sm text-gray-600">
+                                            <span x-text="profileData.location"></span>
+                                            <span x-text="profileData.email"></span>
+                                            <span x-text="profileData.phone"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Summary -->
+                                    <div class="mb-4">
+                                        <h2 class="text-lg font-bold border-b border-gray-300 pb-1 mb-2">Podsumowanie
+                                        </h2>
+                                        <p class="text-sm" x-text="profileData.summary"></p>
+                                    </div>
+
+                                    <!-- Experience -->
+                                    <div class="mb-6">
+                                        <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-1 mb-3">Doświadczenie
+                                        </h2>
+                                        <template x-for="(job, index) in profileData.experience" :key="index">
+                                            <div class="mb-4">
+                                                <div class="flex justify-between">
+                                                    <h3 class="font-bold" x-text="job.title"></h3>
+                                                    <div class="text-gray-600">
+                                                        <span x-text="job.startDate"></span> - <span
+                                                            x-text="job.endDate || 'Obecnie'"></span>
+                                                    </div>
+                                                </div>
+                                                <p class="font-semibold" x-text="job.company"></p>
+                                                <p class="mt-1" x-text="job.description"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Education -->
+                                    <div class="mb-6">
+                                        <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-1 mb-3">Edukacja</h2>
+                                        <template x-for="(edu, index) in profileData.education" :key="index">
+                                            <div class="mb-4">
+                                                <div class="flex justify-between">
+                                                    <h3 class="font-bold" x-text="edu.institution"></h3>
+                                                    <div class="text-gray-600">
+                                                        <span x-text="edu.startDate"></span> - <span
+                                                            x-text="edu.endDate || 'Obecnie'"></span>
+                                                    </div>
+                                                </div>
+                                                <p class="font-semibold" x-text="edu.degree"></p>
+                                                <p class="mt-1" x-text="edu.description"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Skills -->
+                                    <div>
+                                        <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-1 mb-3">Umiejętności
+                                        </h2>
+                                        <div class="flex flex-wrap gap-2">
+                                            <template x-for="(skill, index) in profileData.skills" :key="index">
+                                                <span class="bg-gray-100 px-3 py-1 rounded-full" x-text="skill"></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Modern Template -->
+                            <template x-if="selectedTemplate === 2">
+                                <div class="flex flex-col md:flex-row gap-6">
+                                    <!-- Sidebar -->
+                                    <div class="md:w-1/3 bg-blue-50 p-4">
+                                        <div class="mb-6 text-center">
+                                            <div
+                                                class="w-24 h-24 bg-blue-500 rounded-full mx-auto mb-3 flex items-center justify-center text-white text-3xl font-bold">
+                                                <span x-text="profileData.name.charAt(0)"></span>
+                                            </div>
+                                            <h1 class="text-xl font-bold" x-text="profileData.name"></h1>
+                                            <p class="text-blue-600" x-text="profileData.title"></p>
+                                        </div>
+
+                                        <div class="mb-6">
+                                            <h2 class="text-lg font-bold border-b border-blue-200 pb-1 mb-2">Kontakt
+                                            </h2>
+                                            <div class="space-y-2 text-sm">
+                                                <p x-text="profileData.location"></p>
+                                                <p x-text="profileData.email"></p>
+                                                <p x-text="profileData.phone"></p>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <h2 class="text-lg font-bold border-b border-blue-200 pb-1 mb-2">
+                                                Umiejętności</h2>
+                                            <div class="flex flex-wrap gap-2">
+                                                <template x-for="(skill, index) in profileData.skills" :key="index">
+                                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
+                                                        x-text="skill"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Main Content -->
+                                    <div class="md:w-2/3">
+                                        <!-- Summary -->
+                                        <div class="mb-6">
+                                            <h2
+                                                class="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1 mb-3">
+                                                Podsumowanie</h2>
+                                            <p x-text="profileData.summary"></p>
+                                        </div>
+
+                                        <!-- Experience -->
+                                        <div class="mb-6">
+                                            <h2
+                                                class="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1 mb-3">
+                                                Doświadczenie</h2>
+                                            <template x-for="(job, index) in profileData.experience" :key="index">
+                                                <div class="mb-4">
+                                                    <div class="flex justify-between items-baseline">
+                                                        <h3 class="font-bold text-lg" x-text="job.title"></h3>
+                                                        <p class="text-gray-600 text-sm">
+                                                            <span x-text="job.startDate"></span> - <span
+                                                                x-text="job.endDate || 'Obecnie'"></span>
+                                                        </p>
+                                                    </div>
+                                                    <p class="text-blue-600 font-medium" x-text="job.description"></p>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Education -->
+                                        <div>
+                                            <h2
+                                                class="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1 mb-3">
+                                                Edukacja</h2>
+                                            <template x-for="(edu, index) in profileData.education" :key="index">
+                                                <div class="mb-4">
+                                                    <div class="flex justify-between items-baseline">
+                                                        <h3 class="font-bold text-lg" x-text="edu.degree"></h3>
+                                                        <p class="text-gray-600 text-sm">
+                                                            <span x-text="edu.startDate"></span> - <span
+                                                                x-text="edu.endDate || 'Obecnie'"></span>
+                                                        </p>
+                                                    </div>
+                                                    <p class="text-blue-600 font-medium" x-text="edu.institution"></p>
+                                                    <p class="mt-1" x-text="edu.description"></p>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Professional Template -->
+                            <template x-if="selectedTemplate === 3">
+                                <div>
+                                    <!-- Header with indigo accent -->
+                                    <div class="border-b-4 border-indigo-700 pb-4 mb-6">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h1 class="text-3xl font-bold mb-1" x-text="profileData.name"></h1>
+                                                <p class="text-xl text-indigo-700" x-text="profileData.title"></p>
+                                            </div>
+                                            <div class="text-right text-gray-600">
+                                                <p x-text="profileData.email"></p>
+                                                <p x-text="profileData.phone"></p>
+                                                <p x-text="profileData.location"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Summary -->
+                                    <div class="mb-6">
+                                        <h2 class="text-lg font-bold text-indigo-700 mb-2">PODSUMOWANIE ZAWODOWE</h2>
+                                        <p x-text="profileData.summary"></p>
+                                    </div>
+
+                                    <!-- Experience -->
+                                    <div class="mb-6">
+                                        <h2 class="text-lg font-bold text-indigo-700 mb-2">DOŚWIADCZENIE ZAWODOWE</h2>
+                                        <template x-for="(job, index) in profileData.experience" :key="index">
+                                            <div class="mb-4">
+                                                <div class="flex justify-between items-baseline">
+                                                    <h3 class="font-bold text-lg" x-text="job.company"></h3>
+                                                    <p class="text-gray-600">
+                                                        <span x-text="job.startDate"></span> - <span
+                                                            x-text="job.endDate || 'Obecnie'"></span>
+                                                    </p>
+                                                </div>
+                                                <p class="font-semibold text-indigo-600 mb-1" x-text="job.title"></p>
+                                                <p x-text="job.description"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Education -->
+                                    <div class="mb-6">
+                                        <h2 class="text-lg font-bold text-indigo-700 mb-2">WYKSZTAŁCENIE</h2>
+                                        <template x-for="(edu, index) in profileData.education" :key="index">
+                                            <div class="mb-4">
+                                                <div class="flex justify-between items-baseline">
+                                                    <h3 class="font-bold text-lg" x-text="edu.institution"></h3>
+                                                    <p class="text-gray-600">
+                                                        <span x-text="edu.startDate"></span> - <span
+                                                            x-text="edu.endDate || 'Obecnie'"></span>
+                                                    </p>
+                                                </div>
+                                                <p class="font-semibold text-indigo-600 mb-1" x-text="edu.degree"></p>
+                                                <p x-text="edu.description"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Skills -->
+                                    <div>
+                                        <h2 class="text-lg font-bold text-indigo-700 mb-2">UMIEJĘTNOŚCI I KOMPETENCJE
+                                        </h2>
+                                        <div class="flex flex-wrap gap-2">
+                                            <template x-for="(skill, index) in profileData.skills" :key="index">
+                                                <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded"
+                                                    x-text="skill"></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Minimal Template -->
+                            <template x-if="selectedTemplate === 4">
+                                <!-- Minimal template content -->
+                            </template>
+
+                            <!-- Executive Template -->
+                            <template x-if="selectedTemplate === 5">
+                                <!-- Executive template content -->
+                            </template>
+
+                            <!-- Creative Template -->
+                            <template x-if="selectedTemplate === 6">
+                                <!-- Creative template content -->
+                            </template>
+
+                            <!-- Technical Template -->
+                            <template x-if="selectedTemplate === 7">
+                                <!-- Technical template content -->
+                            </template>
+
+                            <!-- Corporate Template -->
+                            <template x-if="selectedTemplate === 8">
+                                <!-- Corporate template content -->
+                            </template>
+
+                            <!-- Academic Template -->
+                            <template x-if="selectedTemplate === 9">
+                                <!-- Academic template content -->
+                            </template>
+
+                            <!-- Bold Template -->
+                            <template x-if="selectedTemplate === 10">
+                                <!-- Bold template content -->
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between">
+                <button @click="step = 2.5" class="bg-gray-300 text-gray-800 py-2 px-6 rounded-md hover:bg-gray-400">
+                    Zmień Szablon
+                </button>
+                <button @click="downloadResume" class="bg-green-500 text-white py-2 px-6 rounded-md hover:bg-green-600">
+                    Pobierz PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
