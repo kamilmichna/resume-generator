@@ -101,11 +101,6 @@ export function app() {
             this.totalPages = resumePreview.calculateTotalPages();
         },
 
-        // Update page view based on current page
-        updatePageView() {
-            resumePreview.setPageTransform(this.currentPage);
-        },
-
         // Download resume as PDF
         downloadResume() {
             window.scrollTo(0, 0)
@@ -158,7 +153,7 @@ export function app() {
             document.body.appendChild(modal);
 
             // Clone the resume preview content
-            const resumePreview = document.getElementById('resume-preview');
+            const resumePreview = document.getElementById('resume-container');
             const templatePreview = document.getElementById('template-preview');
 
             if (resumePreview && templatePreview) {

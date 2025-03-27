@@ -7,7 +7,7 @@
  * @param {string} name - The name to use in the PDF filename
  */
 export function generatePDF(name) {
-    const element = document.getElementById('resume-preview');
+    const element = document.getElementById('resume-container');
 
     // Reset transform to show all content
     const originalTransform = element.style.transform;
@@ -23,11 +23,11 @@ export function generatePDF(name) {
         //     useCORS: true,
         //     logging: false
         // },
-        // jsPDF: {
-        //     unit: 'mm',
-        //     format: 'a4',
-        //     orientation: 'portrait'
-        // }
+        jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait'
+        }
     };
 
     // Create a clone of the element to avoid modifying the visible DOM
