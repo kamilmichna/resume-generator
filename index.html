@@ -34,15 +34,13 @@
             margin-bottom: 20px;
             /* A4 page dimensions with proper proportions */
             width: 210mm;
-            height: 297mm;
+            /* height: 297mm; */
             /* Scale for screen display while maintaining A4 proportions */
             max-width: 100%;
-            /* For print purposes */
-            break-after: page;
-            /* Ensure proper rendering */
-            position: relative;
-            /* Maintain aspect ratio */
-            aspect-ratio: 210 / 297;
+        }
+
+        .resume-section {
+            break-inside: avoid-page;
         }
     </style>
 </head>
@@ -315,97 +313,83 @@
                     <div class="text-gray-700">
                         Strona <span x-text="currentPage"></span> z <span x-text="totalPages"></span>
                     </div>
-                    <div class="flex space-x-2">
-                        <button @click="prevPage" :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
-                            :disabled="currentPage === 1"
-                            class="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300">
-                            Poprzednia
-                        </button>
-                        <button @click="nextPage" :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
-                            :disabled="currentPage === totalPages"
-                            class="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300">
-                            Następna
-                        </button>
-                    </div>
                 </div>
 
                 <!-- A4 format wrapper with proper scaling -->
                 <div class="bg-gray-100 p-8 flex justify-center">
                     <div id="resume-container">
-                        <template x-for="i in 3">
-                            <div class="shadow-lg w-full bg-white my-2 resume-page my-2" id="resume-preview">
-                                <!-- Resume content -->
-                                <div>
-                                    <!-- Header with name and title -->
-                                    <div class="resume-header text-center border-b pb-4">
-                                        <h1 class="resume-name text-3xl font-bold" x-text="profileData.name"></h1>
-                                        <p class="resume-title text-xl text-gray-600 mt-1" x-text="profileData.title">
-                                        </p>
-                                        <div
-                                            class="resume-contact flex justify-center space-x-4 mt-2 text-sm text-gray-600">
-                                            <span x-show="profileData.email" x-text="profileData.email"></span>
-                                            <span x-show="profileData.phone" x-text="profileData.phone"></span>
+                        <div class="shadow-lg w-full bg-white my-2 resume-page my-2" id="resume-preview">
+                            <!-- Resume content -->
+                            <div>
+                                <!-- Header with name and title -->
+                                <div class="resume-header text-center border-b pb-4">
+                                    <h1 class="resume-name text-3xl font-bold" x-text="profileData.name"></h1>
+                                    <p class="resume-title text-xl text-gray-600 mt-1" x-text="profileData.title">
+                                    </p>
+                                    <div
+                                        class="resume-contact flex justify-center space-x-4 mt-2 text-sm text-gray-600">
+                                        <span x-show="profileData.email" x-text="profileData.email"></span>
+                                        <span x-show="profileData.phone" x-text="profileData.phone"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Summary -->
+                                <div x-show="profileData.summary" class="resume-section mt-6">
+                                    <h2 class="resume-section-title text-xl font-bold mb-2">Podsumowanie</h2>
+                                    <p class="text-gray-700" x-text="profileData.summary"></p>
+                                </div>
+
+                                <!-- Experience -->
+                                <div x-show="profileData.experience && profileData.experience.length"
+                                    class="resume-section mt-6">
+                                    <h2 class="resume-section-title text-xl font-bold mb-3">Doświadczenie</h2>
+                                    <template x-for="(job, index) in profileData.experience" :key="index">
+                                        <div class="mb-4">
+                                            <h3 class="resume-job-title font-bold" x-text="job.title"></h3>
+                                            <p class="text-gray-600">
+                                                <span class="resume-job-company" x-text="job.company"></span> •
+                                                <span class="resume-job-date">
+                                                    <span x-text="job.startDate"></span> -
+                                                    <span x-text="job.endDate || 'Obecnie'"></span>
+                                                </span>
+                                            </p>
+                                            <p class="mt-2" x-text="job.description"></p>
                                         </div>
-                                    </div>
+                                    </template>
+                                </div>
 
-                                    <!-- Summary -->
-                                    <div x-show="profileData.summary" class="resume-section mt-6">
-                                        <h2 class="resume-section-title text-xl font-bold mb-2">Podsumowanie</h2>
-                                        <p class="text-gray-700" x-text="profileData.summary"></p>
-                                    </div>
-
-                                    <!-- Experience -->
-                                    <div x-show="profileData.experience && profileData.experience.length"
-                                        class="resume-section mt-6">
-                                        <h2 class="resume-section-title text-xl font-bold mb-3">Doświadczenie</h2>
-                                        <template x-for="(job, index) in profileData.experience" :key="index">
-                                            <div class="mb-4">
-                                                <h3 class="resume-job-title font-bold" x-text="job.title"></h3>
-                                                <p class="text-gray-600">
-                                                    <span class="resume-job-company" x-text="job.company"></span> •
-                                                    <span class="resume-job-date">
-                                                        <span x-text="job.startDate"></span> -
-                                                        <span x-text="job.endDate || 'Obecnie'"></span>
-                                                    </span>
-                                                </p>
-                                                <p class="mt-2" x-text="job.description"></p>
-                                            </div>
-                                        </template>
-                                    </div>
-
-                                    <!-- Education -->
-                                    <div x-show="profileData.education && profileData.education.length"
-                                        class="resume-section mt-6">
-                                        <h2 class="resume-section-title text-xl font-bold mb-3">Edukacja</h2>
-                                        <template x-for="(edu, index) in profileData.education" :key="index">
-                                            <div class="mb-4">
-                                                <h3 class="resume-job-title font-bold" x-text="edu.institution"></h3>
-                                                <p class="text-gray-600">
-                                                    <span class="resume-job-company" x-text="edu.degree"></span> •
-                                                    <span class="resume-job-date">
-                                                        <span x-text="edu.startDate"></span> -
-                                                        <span x-text="edu.endDate || 'Obecnie'"></span>
-                                                    </span>
-                                                </p>
-                                                <p class="mt-2" x-text="edu.description"></p>
-                                            </div>
-                                        </template>
-                                    </div>
-
-                                    <!-- Skills -->
-                                    <div x-show="profileData.skills && profileData.skills.length"
-                                        class="resume-section mt-6">
-                                        <h2 class="resume-section-title text-xl font-bold mb-3">Umiejętności</h2>
-                                        <div class="resume-skill-container flex flex-wrap gap-2">
-                                            <template x-for="(skill, index) in profileData.skills" :key="index">
-                                                <span class="resume-skill bg-gray-100 px-3 py-1 rounded-full text-sm"
-                                                    x-text="skill"></span>
-                                            </template>
+                                <!-- Education -->
+                                <div x-show="profileData.education && profileData.education.length"
+                                    class="resume-section mt-6">
+                                    <h2 class="resume-section-title text-xl font-bold mb-3">Edukacja</h2>
+                                    <template x-for="(edu, index) in profileData.education" :key="index">
+                                        <div class="mb-4">
+                                            <h3 class="resume-job-title font-bold" x-text="edu.institution"></h3>
+                                            <p class="text-gray-600">
+                                                <span class="resume-job-company" x-text="edu.degree"></span> •
+                                                <span class="resume-job-date">
+                                                    <span x-text="edu.startDate"></span> -
+                                                    <span x-text="edu.endDate || 'Obecnie'"></span>
+                                                </span>
+                                            </p>
+                                            <p class="mt-2" x-text="edu.description"></p>
                                         </div>
+                                    </template>
+                                </div>
+
+                                <!-- Skills -->
+                                <div x-show="profileData.skills && profileData.skills.length"
+                                    class="resume-section mt-6">
+                                    <h2 class="resume-section-title text-xl font-bold mb-3">Umiejętności</h2>
+                                    <div class="resume-skill-container flex flex-wrap gap-2">
+                                        <template x-for="(skill, index) in profileData.skills" :key="index">
+                                            <span class="resume-skill bg-gray-100 px-3 py-1 rounded-full text-sm"
+                                                x-text="skill"></span>
+                                        </template>
                                     </div>
                                 </div>
                             </div>
-                        </template>
+                        </div>
                     </div>
                 </div>
             </div>
