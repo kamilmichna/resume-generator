@@ -7,101 +7,31 @@
  * @param {string} linkedinUrl - The LinkedIn profile URL
  * @returns {Promise} - Promise that resolves with the processed profile data
  */
-export function fetchLinkedInData(linkedinUrl) {
-    return new Promise((resolve, reject) => {
-        // In a real app, this would make an API call with the LinkedIn URL
-        // For now, we'll simulate an API call with the provided sample data
-        setTimeout(() => {
-            try {
-                // Simulate API response
-                const apiResponse = {
-                    "data": {
-                        "about": "I'm CJ, Professor of Real Estate at Schack Institute and a Founder of NOYACK, a financial education company impacting the lives of young investors everywhere through financial education, community and universal access to private markets.\n\nI am the son of Italian immigrants,  my father a highly decorated NYFD Fireman who then built one of the largest municipal building companies in New York City. Nancy Reagan gave him an award for his projects. At 16 my father had a stroke and I gave up my dream of playing in the NHL (yeah, right) to manage the family business which I knew nothing about.\n\nThat started a 40 year journey of educating myself through thousands of hours of reading and painful mistakes. But it also turned out to be my life's mission and I wish everyone finds they're purpose and is able to pusue it . I am doing this as a financial educator of young investors after a pretty successful career as the Chief Investment Officer of a nine family investing syndicate; my track record over 30 years doing this is  23% average annual returns.  We invested in: commercial real estate, media IP,  early stage venture capital, private credit, fine art and consumer packaged goods.",
-                        "certifications": [
-                            {
-                                "authority": "Harvard Business School",
-                                "issued": "Sep 1993 · Expired Jun 1994",
-                                "name": "Portfolio Management Professional (PfMP)",
-                                "url": null
-                            }
-                        ],
-                        "city": "New York",
-                        "company": "NYU Schack Institute of Real Estate",
-                        "connections_count": 500,
-                        "country": "United States",
-                        "educations": [
-                            {
-                                "degree": "Executive Management Program",
-                                "field_of_study": "",
-                                "school": "Harvard Business School",
-                                "date_range": ""
-                            },
-                            {
-                                "degree": "GC",
-                                "field_of_study": "Game Theory And Econometrics",
-                                "school": "London School of Economics and Political Science",
-                                "date_range": ""
-                            },
-                            {
-                                "degree": "Bachelor of Science (BS)",
-                                "field_of_study": "Mathematical Statistics and Probability",
-                                "school": "Tufts University",
-                                "date_range": ""
-                            }
-                        ],
-                        "email": "",
-                        "experiences": [
-                            {
-                                "company": "NYU Schack Institute of Real Estate",
-                                "date_range": "Apr 2024 - present",
-                                "description": "I teach in the NYU Masters Program specifically about Real Estate Investment Trusts, Financing and Investment",
-                                "duration": "2 mos",
-                                "is_current": true,
-                                "location": "New York City Metropolitan Area",
-                                "title": "Professor of Real Estate"
-                            },
-                            {
-                                "company": "Noyack Capital",
-                                "date_range": "1988 - present",
-                                "description": "I am the  Chief Investment Officer of a nine UNHW family alternative investment allocator. NOYACK allocated to  commercial real estate, seed VC, consumer packaged goods, and opportunistic special situations.",
-                                "duration": "36 yrs 5 mos",
-                                "is_current": true,
-                                "location": "New York City Metropolitan Area",
-                                "title": "Chief Investment Officer of MultiFamily Office"
-                            },
-                            {
-                                "company": "NOYACK Wealth Club",
-                                "date_range": "2022 - present",
-                                "description": "NOYACK (weareNOYACK.com)is a fast-growing financial education startup that is the only membership club for Millennial, Gen Z, Gen Alpha learn, interact, and invest in private markets.",
-                                "duration": "2 yrs 5 mos",
-                                "is_current": true,
-                                "location": "NYC",
-                                "title": "Founder & CEO"
-                            }
-                        ],
-                        "first_name": "CJ",
-                        "followers_count": 14648,
-                        "full_name": "CJ Follini",
-                        "headline": "NYU Professor of Real estate | CIO & Multi-Family Office Allocator |  #AlternativeInvestment Expert | Board Member | Publisher of #1 Subscribed Newsletter | #FinancialEducation Nonprofit | Public Speaker | Proud dad",
-                        "job_title": "Professor of Real Estate",
-                        "languages": "Italian, Spanish",
-                        "last_name": "Follini",
-                        "location": "New York, New York, United States",
-                        "phone": "",
-                        "profile_image_url": "https://media.licdn.com/dms/image/D4E03AQGbJVJnATuprA/profile-displayphoto-shrink_800_800/0/1702576825399?e=1721865600&v=beta&t=r74_ZJruN-pR_lRw7hWdR3c9F-ZKrhcAbkMcVOxtUTI",
-                        "skills": "Financial Analysis|Investment Management|Real Estate|Private Equity|Venture Capital|Portfolio Management|Public Speaking|Strategic Partnerships|Business Development|Leadership"
-                    },
-                    "message": "ok"
-                };
+export async function fetchLinkedInData(linkedinUrl) {
+    // In a real app, this would make an API call with the LinkedIn URL
+    // For now, we'll simulate an API call with the provided sample data
+    try {
+        console.log("FETCHING DATA")
+        // Simulate API response
+        const apiResponse = await fetch(`https://fresh-linkedin-profile-data.p.rapidapi.com/get-linkedin-profile?linkedin_url=${linkedinUrl}&include_skills=true&include_certifications=true&include_publications=false&include_honors=false&include_volunteers=false&include_projects=false&include_patents=false&include_courses=true&include_organizations=true&include_profile_status=true&include_company_public_url=false`, {
+            headers: {
+                'x-rapidapi-key': 'RAPID_API_KEY_HERE',
+                'x-rapidapi-host': 'fresh-linkedin-profile-data.p.rapidapi.com',
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Origin, Content-Type, Accept'
+            },
+            mode: 'cors'
+        })
 
-                // Process the API response
-                const processedData = processLinkedInData(apiResponse.data);
-                resolve(processedData);
-            } catch (error) {
-                reject(error);
-            }
-        }, 1500);
-    });
+        const finalData = await apiResponse.json();
+        // Process the API response
+        const processedData = processLinkedInData(finalData.data);
+        return processedData;
+    } catch (error) {
+        throw error;
+    }
 }
 
 /**
@@ -109,7 +39,8 @@ export function fetchLinkedInData(linkedinUrl) {
  * @param {Object} data - Raw LinkedIn API data
  * @returns {Object} - Processed profile data
  */
-function processLinkedInData(data) {
+function processLinkedInData(data = {}) {
+    console.log(data)
     // Format skills from pipe-separated string to array and limit to 10
     const skillsArray = data.skills ? data.skills.split('|').slice(0, 10) : [];
 
